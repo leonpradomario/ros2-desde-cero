@@ -1,0 +1,137 @@
+{
+  "id": "01",
+  "titulo": "Publicador y suscriptor",
+  "pasos": [
+    {
+      "tipo": "teoria",
+      "titulo": "Un robot es un grupo de programas que conversan",
+      "bloques": [
+        { "p": "En ROS2, cada programa se llama **nodo**. Un nodo hace una sola cosa: leer un sensor, mover un motor, decidir a dónde ir." },
+        { "p": "Un robot real no es un programa gigante. Son muchos nodos pequeños que se pasan datos entre sí. Si uno falla, los demás siguen corriendo." },
+        { "nota": "Esta lección usa solo lo que ya viene con ROS2. No hay que instalar nada más." }
+      ]
+    },
+    {
+      "tipo": "teoria",
+      "titulo": "Los tópicos son los canales",
+      "bloques": [
+        { "p": "Los nodos no se hablan directamente. Un nodo **publica** mensajes en un **tópico**, que es un canal con nombre. Cualquier nodo que se **suscriba** a ese tópico los recibe." },
+        { "diagrama": "pubsub" },
+        { "p": "El publicador no sabe quién lo escucha, ni si alguien lo escucha. Solo publica. Por eso puedes agregar o quitar nodos sin tocar el resto." }
+      ]
+    },
+    {
+      "tipo": "opcion",
+      "pregunta": "¿Qué es un nodo?",
+      "opciones": [
+        "Un programa que cumple una tarea y se comunica con otros",
+        "El cable que conecta dos computadoras del robot",
+        "Un archivo de configuración de ROS2",
+        "El canal por donde viajan los mensajes"
+      ],
+      "correcta": 0,
+      "explicacion": "Un nodo es un programa en ejecución. El canal por donde viajan los mensajes es el tópico."
+    },
+    {
+      "tipo": "opcion",
+      "pregunta": "Un nodo publica en `/saludo`, pero ningún nodo está suscrito. ¿Qué pasa?",
+      "opciones": [
+        "Publica igual, y nadie recibe los mensajes",
+        "El publicador se detiene con un error",
+        "ROS2 guarda todos los mensajes hasta que alguien se suscriba",
+        "El publicador espera a que aparezca un suscriptor"
+      ],
+      "correcta": 0,
+      "explicacion": "Publicar no depende de que alguien escuche. Con la configuración por defecto, un suscriptor que llega tarde solo recibe los mensajes nuevos."
+    },
+    {
+      "tipo": "teoria",
+      "titulo": "El publicador, en código",
+      "bloques": [
+        { "p": "Un nodo en Python es una clase que hereda de `Node`. En el constructor creas lo que el nodo necesita." },
+        { "codigo": "class Publicador(Node):\n    def __init__(self):\n        super().__init__('publicador')\n        self.pub = self.create_publisher(String, 'saludo', 10)\n        self.timer = self.create_timer(1.0, self.publicar)" },
+        { "p": "`create_publisher` recibe tres cosas: el **tipo** de mensaje (`String`), el **nombre** del tópico (`'saludo'`) y el tamaño de la **cola** (`10`)." },
+        { "p": "`create_timer(1.0, self.publicar)` llama a la función `publicar` cada 1.0 segundos." }
+      ]
+    },
+    {
+      "tipo": "completar",
+      "pregunta": "Crea un publicador de mensajes `String` en el tópico `saludo`.",
+      "codigo": "self.pub = self.create_publisher({{0}}, '{{1}}', 10)",
+      "respuestas": ["String", "saludo"],
+      "distractores": ["Node", "publicar", "timer"],
+      "explicacion": "Primero va el tipo de mensaje y después el nombre del tópico."
+    },
+    {
+      "tipo": "opcion",
+      "pregunta": "En `create_publisher(String, 'saludo', 10)`, ¿qué es el `10`?",
+      "opciones": [
+        "Cuántos mensajes se guardan en cola si la entrega se atrasa",
+        "Cuántos mensajes se publican por segundo",
+        "Cuántos suscriptores puede tener el tópico",
+        "Cuántos segundos vive el nodo"
+      ],
+      "correcta": 0,
+      "explicacion": "Es el tamaño de la cola. Si los mensajes se producen más rápido de lo que se entregan, se guardan hasta 10 y los más antiguos se descartan. La frecuencia la pone el timer."
+    },
+    {
+      "tipo": "teoria",
+      "titulo": "El suscriptor y su callback",
+      "bloques": [
+        { "p": "Un suscriptor no pregunta si hay mensajes. Le entrega a ROS2 una función, y ROS2 la llama cada vez que llega uno. Esa función se llama **callback**." },
+        { "codigo": "class Suscriptor(Node):\n    def __init__(self):\n        super().__init__('suscriptor')\n        self.sub = self.create_subscription(\n            String, 'saludo', self.escuchar, 10)\n\n    def escuchar(self, msg):\n        self.get_logger().info(f'Recibido: \"{msg.data}\"')" },
+        { "p": "Fíjate en `self.escuchar`, sin paréntesis: le pasas la función, no la llamas tú." },
+        { "nota": "El tipo y el nombre del tópico tienen que ser idénticos en los dos nodos. `saludo` y `saludos` son dos tópicos distintos, y ROS2 no avisa." }
+      ]
+    },
+    {
+      "tipo": "error",
+      "pregunta": "Este suscriptor falla al arrancar. Toca la línea que tiene el error.",
+      "codigo": "class Suscriptor(Node):\n    def __init__(self):\n        super().__init__('suscriptor')\n        self.sub = self.create_subscription(\n            String, 'saludo', self.escuchar(), 10)\n\n    def escuchar(self, msg):\n        self.get_logger().info(msg.data)",
+      "lineaError": 5,
+      "correccion": "String, 'saludo', self.escuchar, 10)",
+      "explicacion": "Con paréntesis, `self.escuchar()` se ejecuta en ese instante, sin ningún mensaje, y Python lanza un error. La función se pasa sin llamarla."
+    },
+    {
+      "tipo": "teoria",
+      "titulo": "Arrancar el nodo",
+      "bloques": [
+        { "p": "Definir la clase no ejecuta nada. Falta una función `main` que haga cinco cosas, siempre en este orden:" },
+        { "codigo": "def main():\n    rclpy.init()           # 1. Enciende ROS2\n    nodo = Suscriptor()    # 2. Crea el nodo\n    rclpy.spin(nodo)       # 3. Lo deja trabajando\n    nodo.destroy_node()    # 4. Lo destruye al salir\n    rclpy.shutdown()       # 5. Apaga ROS2" },
+        { "p": "`rclpy.spin` es el paso que más se olvida. Sin él, el programa termina de inmediato y ningún callback llega a ejecutarse." }
+      ]
+    },
+    {
+      "tipo": "ordenar",
+      "pregunta": "Ordena las líneas de `main` para arrancar el nodo.",
+      "lineas": [
+        "rclpy.init()",
+        "nodo = Suscriptor()",
+        "rclpy.spin(nodo)",
+        "nodo.destroy_node()",
+        "rclpy.shutdown()"
+      ],
+      "explicacion": "Encender, crear, girar, destruir, apagar."
+    },
+    {
+      "tipo": "escribir",
+      "pregunta": "Los dos nodos ya están corriendo. Escribe el comando que lista los tópicos activos.",
+      "aceptadas": ["ros2 topic list"],
+      "explicacion": "`ros2 topic list` muestra todos los tópicos del sistema. Ahí debería aparecer `/saludo`."
+    },
+    {
+      "tipo": "escribir",
+      "pregunta": "Ahora escribe el comando que muestra en vivo los mensajes del tópico `/saludo`.",
+      "aceptadas": ["ros2 topic echo /saludo", "ros2 topic echo saludo"],
+      "explicacion": "`ros2 topic echo` es un suscriptor rápido desde la terminal. Sirve para comprobar que un nodo publica sin tener que escribir otro nodo."
+    }
+  ],
+  "enTuMaquina": {
+    "intro": "Compila el paquete y abre dos terminales. En cada una, primero ejecuta `source install/setup.bash`.",
+    "terminales": [
+      { "nombre": "Terminal 1", "comando": "ros2 run ros2_desde_cero publicador" },
+      { "nombre": "Terminal 2", "comando": "ros2 run ros2_desde_cero suscriptor" }
+    ],
+    "codigo": "ros2_desde_cero/ros2_desde_cero/leccion_01_pub_sub"
+  }
+}

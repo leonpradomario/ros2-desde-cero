@@ -1,0 +1,105 @@
+{
+  "id": "03",
+  "titulo": "Launch file",
+  "pasos": [
+    {
+      "tipo": "teoria",
+      "titulo": "Demasiadas terminales",
+      "bloques": [
+        { "p": "Para probar las dos lecciones anteriores abriste cuatro terminales: publicador, suscriptor, servidor y cliente. Un robot real tiene decenas de nodos." },
+        { "p": "Un **launch file** es un archivo que describe qué nodos arrancar. Con un solo comando los levanta todos, y con un solo `Ctrl+C` los apaga." },
+        { "diagrama": "launch" }
+      ]
+    },
+    {
+      "tipo": "teoria",
+      "titulo": "La forma mínima",
+      "bloques": [
+        { "codigo": "from launch import LaunchDescription\nfrom launch_ros.actions import Node\n\n\ndef generate_launch_description():\n    return LaunchDescription([\n        Node(package='ros2_desde_cero', executable='publicador'),\n        Node(package='ros2_desde_cero', executable='suscriptor'),\n    ])" },
+        { "p": "ROS2 busca una función con ese nombre exacto: `generate_launch_description`. Lo que devuelve es la lista de cosas por arrancar." },
+        { "p": "Cada `Node(...)` equivale a un `ros2 run`. `package` es el paquete y `executable` es el nombre que escribirías después de `ros2 run`." }
+      ]
+    },
+    {
+      "tipo": "opcion",
+      "pregunta": "¿Qué función busca ROS2 dentro de un launch file?",
+      "opciones": ["`generate_launch_description`", "`main`", "`launch`", "`__init__`"],
+      "correcta": 0,
+      "explicacion": "El nombre tiene que ser exactamente `generate_launch_description`. Con otro nombre, `ros2 launch` termina con un error."
+    },
+    {
+      "tipo": "completar",
+      "pregunta": "Agrega al launch file el servidor de la lección anterior.",
+      "codigo": "Node(package='{{0}}', executable='{{1}}'),",
+      "respuestas": ["ros2_desde_cero", "servidor"],
+      "distractores": ["servidor.py", "sumar", "launch"],
+      "explicacion": "`executable` es el nombre del ejecutable, el mismo de `ros2 run`. No es el archivo `.py` ni el nombre del servicio."
+    },
+    {
+      "tipo": "error",
+      "pregunta": "Este launch file no logra arrancar uno de los nodos. Toca la línea que tiene el error.",
+      "codigo": "def generate_launch_description():\n    return LaunchDescription([\n        Node(package='ros2_desde_cero', executable='publicador'),\n        Node(package='ros2_desde_cero', executable='suscriptor.py'),\n    ])",
+      "lineaError": 4,
+      "correccion": "Node(package='ros2_desde_cero', executable='suscriptor'),",
+      "explicacion": "El ejecutable se llama `suscriptor`, sin `.py`. Ese nombre se define en `setup.py`, dentro de `entry_points`."
+    },
+    {
+      "tipo": "teoria",
+      "titulo": "El paso que casi todos olvidan",
+      "bloques": [
+        { "p": "Escribir el launch file no alcanza: hay que **instalarlo**. `ros2 launch` no busca en tu carpeta de código, sino en la carpeta `install/` que genera `colcon build`." },
+        { "p": "En un paquete de Python, eso se declara en `setup.py`, dentro de `data_files`:" },
+        { "codigo": "(os.path.join('share', package_name, 'launch'),\n    glob('launch/*.launch.py')),"},
+        { "p": "Esa línea copia todo archivo de la carpeta `launch/` que termine en `.launch.py`. Después de agregarla, hay que volver a compilar." }
+      ]
+    },
+    {
+      "tipo": "opcion",
+      "pregunta": "Creaste `prueba.launch.py`, y `ros2 launch` responde que el archivo no existe. ¿Cuál es la causa más probable?",
+      "opciones": [
+        "No está declarado en `data_files`, o no volviste a compilar",
+        "El launch file necesita permisos de administrador",
+        "Hay que reiniciar la computadora",
+        "ROS2 admite un solo launch file por paquete"
+      ],
+      "correcta": 0,
+      "explicacion": "`ros2 launch` solo ve lo que está en `install/`. Si el archivo no se declaró en `data_files`, o no corriste `colcon build` después, nunca llegó ahí."
+    },
+    {
+      "tipo": "ordenar",
+      "pregunta": "Agregaste un launch file nuevo al paquete. Ordena los comandos para ejecutarlo.",
+      "lenguaje": "bash",
+      "lineas": [
+        "colcon build --packages-select ros2_desde_cero",
+        "source install/setup.bash",
+        "ros2 launch ros2_desde_cero leccion_03.launch.py"
+      ],
+      "explicacion": "Compilar copia el launch file a `install/`. `source` le dice a tu terminal dónde está. Recién entonces `ros2 launch` lo encuentra."
+    },
+    {
+      "tipo": "opcion",
+      "pregunta": "Presionas `Ctrl+C` en la terminal donde corre `ros2 launch`. ¿Qué pasa?",
+      "opciones": [
+        "Se apagan todos los nodos que levantó",
+        "Se apaga solo el primer nodo de la lista",
+        "Los nodos siguen corriendo en segundo plano",
+        "Se borra la carpeta `install/`"
+      ],
+      "correcta": 0,
+      "explicacion": "El launch es dueño de los nodos que arrancó: al cerrarlo, los apaga a todos."
+    },
+    {
+      "tipo": "escribir",
+      "pregunta": "El launch está corriendo. Escribe el comando que lista los nodos activos.",
+      "aceptadas": ["ros2 node list"],
+      "explicacion": "`ros2 node list` muestra cada nodo en ejecución. Deberías ver `/publicador`, `/suscriptor` y `/servidor`."
+    }
+  ],
+  "enTuMaquina": {
+    "intro": "Una sola terminal esta vez. Compila, ejecuta `source install/setup.bash` y lanza. Vas a ver mezclados los mensajes de los cuatro nodos; con `Ctrl+C` se apagan todos.",
+    "terminales": [
+      { "nombre": "Terminal 1", "comando": "ros2 launch ros2_desde_cero leccion_03.launch.py" }
+    ],
+    "codigo": "ros2_desde_cero/launch"
+  }
+}

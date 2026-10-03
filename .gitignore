@@ -1,0 +1,20 @@
+# Carpetas que genera colcon al compilar
+build/
+install/
+log/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Grabaciones de ROS2 (rosbag2): pesan mucho
+*.db3
+*.mcap
+
+# Editores y sistema
+.vscode/
+.idea/
+*.swp
+.DS_Store

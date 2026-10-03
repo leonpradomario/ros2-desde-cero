@@ -1,0 +1,26 @@
+{
+  "unidades": [
+    {
+      "numero": 1,
+      "titulo": "Tu primer grafo",
+      "descripcion": "Tres lecciones para que dos programas se hablen.",
+      "estado": "disponible",
+      "lecciones": [
+        { "id": "01", "titulo": "Publicador y suscriptor", "archivo": "01-pub-sub.json" },
+        { "id": "02", "titulo": "Servicio: cliente y servidor", "archivo": "02-servicio.json" },
+        { "id": "03", "titulo": "Launch file", "archivo": "03-launch.json" }
+      ]
+    },
+    {
+      "numero": 2,
+      "titulo": "Nodos configurables",
+      "descripcion": "Cambiar el comportamiento de un nodo sin tocar su código.",
+      "estado": "construccion",
+      "lecciones": [
+        { "id": "04", "titulo": "Parámetros" },
+        { "id": "05", "titulo": "Interfaces propias" },
+        { "id": "06", "titulo": "Acciones" }
+      ]
+    }
+  ]
+}

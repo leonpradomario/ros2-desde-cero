@@ -1,0 +1,119 @@
+{
+  "id": "02",
+  "titulo": "Servicio: cliente y servidor",
+  "pasos": [
+    {
+      "tipo": "teoria",
+      "titulo": "Cuando necesitas una respuesta",
+      "bloques": [
+        { "p": "Un tópico es un flujo: el publicador envía y no se entera de nada más. Sirve para datos continuos, como la lectura de un sensor." },
+        { "p": "A veces necesitas otra cosa: pedir algo y saber qué pasó. Para eso están los **servicios**. Un nodo **cliente** envía una petición; un nodo **servidor** la atiende y devuelve una respuesta." },
+        { "diagrama": "servicio" }
+      ]
+    },
+    {
+      "tipo": "opcion",
+      "pregunta": "Un LIDAR entrega una lectura 10 veces por segundo. ¿Qué usas para enviarla a otros nodos?",
+      "opciones": ["Un tópico", "Un servicio", "Un timer"],
+      "correcta": 0,
+      "explicacion": "Son datos continuos y nadie necesita contestar cada lectura. Eso es un tópico."
+    },
+    {
+      "tipo": "opcion",
+      "pregunta": "Quieres pedirle al robot que reinicie su odometría y confirmar que lo hizo. ¿Qué usas?",
+      "opciones": ["Un servicio", "Un tópico", "Un timer"],
+      "correcta": 0,
+      "explicacion": "Es una petición puntual y necesitas la confirmación. Eso es un servicio."
+    },
+    {
+      "tipo": "teoria",
+      "titulo": "Un servicio tiene dos mitades",
+      "bloques": [
+        { "p": "El tipo de un servicio define qué viaja en cada dirección. Aquí usamos `AddTwoInts`, que ya viene con ROS2:" },
+        { "codigo": "int64 a\nint64 b\n---\nint64 sum", "lenguaje": "texto" },
+        { "p": "Lo que está arriba de `---` es la **petición**: dos enteros. Lo de abajo es la **respuesta**: su suma." }
+      ]
+    },
+    {
+      "tipo": "teoria",
+      "titulo": "El servidor",
+      "bloques": [
+        { "codigo": "class Servidor(Node):\n    def __init__(self):\n        super().__init__('servidor')\n        self.srv = self.create_service(\n            AddTwoInts, 'sumar', self.atender)\n\n    def atender(self, request, response):\n        response.sum = request.a + request.b\n        return response" },
+        { "p": "`create_service` recibe el tipo, el nombre del servicio y el callback. ROS2 llama a `atender` cada vez que llega una petición y le entrega una respuesta vacía para que la llenes." },
+        { "p": "El callback **tiene que devolver** `response`. Eso es lo que recibe el cliente." }
+      ]
+    },
+    {
+      "tipo": "completar",
+      "pregunta": "Completa el callback del servidor.",
+      "codigo": "def atender(self, request, response):\n    response.{{0}} = request.a + request.b\n    return {{1}}",
+      "respuestas": ["sum", "response"],
+      "distractores": ["request", "result", "b"],
+      "explicacion": "La suma se guarda en el campo `sum` de la respuesta, y lo que se devuelve es la respuesta completa."
+    },
+    {
+      "tipo": "error",
+      "pregunta": "Con este servidor, el cliente nunca recibe la suma. Toca la línea que tiene el error.",
+      "codigo": "def atender(self, request, response):\n    response.sum = request.a + request.b\n    self.get_logger().info('Listo')\n    return response.sum",
+      "lineaError": 4,
+      "correccion": "return response",
+      "explicacion": "El callback debe devolver el objeto `response` entero, no solo el número que lleva dentro."
+    },
+    {
+      "tipo": "teoria",
+      "titulo": "El cliente",
+      "bloques": [
+        { "codigo": "cliente = self.create_client(AddTwoInts, 'sumar')\ncliente.wait_for_service()\n\npeticion = AddTwoInts.Request()\npeticion.a = 2\npeticion.b = 3\n\nfuturo = cliente.call_async(peticion)\nrclpy.spin_until_future_complete(self, futuro)\nrespuesta = futuro.result()" },
+        { "p": "`wait_for_service` espera a que el servidor exista. `call_async` envía la petición y devuelve de inmediato un **futuro**: la promesa de una respuesta." },
+        { "p": "`spin_until_future_complete` deja al nodo trabajando hasta que la respuesta llega. Recién entonces `futuro.result()` la entrega." }
+      ]
+    },
+    {
+      "tipo": "ordenar",
+      "pregunta": "La variable `peticion` ya está lista. Ordena los pasos del cliente.",
+      "lineas": [
+        "cliente = self.create_client(AddTwoInts, 'sumar')",
+        "cliente.wait_for_service()",
+        "futuro = cliente.call_async(peticion)",
+        "rclpy.spin_until_future_complete(self, futuro)",
+        "respuesta = futuro.result()"
+      ],
+      "explicacion": "Crear el cliente, esperar al servidor, enviar la petición, esperar la respuesta y leerla."
+    },
+    {
+      "tipo": "opcion",
+      "pregunta": "¿Qué devuelve `call_async` en el momento en que lo llamas?",
+      "opciones": [
+        "Un futuro: la respuesta todavía no llegó",
+        "La respuesta del servidor",
+        "`True` si el servidor existe",
+        "Nada"
+      ],
+      "correcta": 0,
+      "explicacion": "La respuesta tarda en llegar. `call_async` no la espera: devuelve un futuro, que se completa cuando el servidor contesta."
+    },
+    {
+      "tipo": "escribir",
+      "pregunta": "El servidor está corriendo. Escribe el comando que lista los servicios activos.",
+      "aceptadas": ["ros2 service list"],
+      "explicacion": "`ros2 service list` muestra todos los servicios del sistema. Ahí debería aparecer `/sumar`."
+    },
+    {
+      "tipo": "completar",
+      "pregunta": "También puedes llamar al servicio desde la terminal, sin escribir un cliente. Completa el comando.",
+      "codigo": "ros2 service {{0}} {{1}} example_interfaces/srv/AddTwoInts \"{a: 2, b: 3}\"",
+      "lenguaje": "bash",
+      "respuestas": ["call", "/sumar"],
+      "distractores": ["echo", "list", "/saludo"],
+      "explicacion": "`ros2 service call` necesita tres cosas: el nombre del servicio, su tipo y la petición entre comillas."
+    }
+  ],
+  "enTuMaquina": {
+    "intro": "Abre dos terminales. En cada una, primero ejecuta `source install/setup.bash`. Los dos números del final son los que el cliente pide sumar.",
+    "terminales": [
+      { "nombre": "Terminal 1", "comando": "ros2 run ros2_desde_cero servidor" },
+      { "nombre": "Terminal 2", "comando": "ros2 run ros2_desde_cero cliente 2 3" }
+    ],
+    "codigo": "ros2_desde_cero/ros2_desde_cero/leccion_02_servicio"
+  }
+}
