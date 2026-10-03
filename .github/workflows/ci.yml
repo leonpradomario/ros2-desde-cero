@@ -47,7 +47,9 @@ jobs:
           cat salida.log
 
       - name: Comprobar que el suscriptor recibió mensajes
-        run: grep -c 'Recibido: "Hola ROS2' salida.log
+        run: |
+          grep -c 'Recibido: "Hola ROS2' salida.log
 
       - name: Comprobar que el servicio devolvió la suma
-        run: grep -c 'Resultado: 2 + 3 = 5' salida.log
+        run: |
+          grep -c 'Resultado: 2 + 3 = 5' salida.log
