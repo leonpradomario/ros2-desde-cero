@@ -1,0 +1,53 @@
+name: CI
+
+# Compila el paquete en ROS2 Humble y comprueba que los ejemplos funcionan:
+# que el suscriptor recibe mensajes y que el servicio devuelve la suma.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'ros2_desde_cero/**'
+      - '.github/workflows/ci.yml'
+  pull_request:
+    paths:
+      - 'ros2_desde_cero/**'
+      - '.github/workflows/ci.yml'
+  workflow_dispatch:
+
+jobs:
+  humble:
+    runs-on: ubuntu-22.04
+    container: ros:humble-ros-base
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: src/ros2-desde-cero
+
+      - name: Instalar dependencias
+        run: |
+          apt-get update
+          rosdep update --rosdistro humble
+          rosdep install --from-paths src --ignore-src -y --rosdistro humble
+
+      - name: Compilar
+        run: |
+          source /opt/ros/humble/setup.bash
+          colcon build --packages-select ros2_desde_cero
+
+      - name: Correr el launch de la lección 03
+        run: |
+          source /opt/ros/humble/setup.bash
+          source install/setup.bash
+          # Lo deja correr 15 segundos y lo detiene con Ctrl+C (SIGINT).
+          timeout --signal=INT 15 ros2 launch ros2_desde_cero leccion_03.launch.py > salida.log 2>&1 || true
+          cat salida.log
+
+      - name: Comprobar que el suscriptor recibió mensajes
+        run: grep -c 'Recibido: "Hola ROS2' salida.log
+
+      - name: Comprobar que el servicio devolvió la suma
+        run: grep -c 'Resultado: 2 + 3 = 5' salida.log
