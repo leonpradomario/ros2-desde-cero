@@ -4,6 +4,8 @@ Para correrlo:
     ros2 run ros2_desde_cero publicador
 """
 
+import signal
+
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
@@ -38,6 +40,9 @@ def main(args=None):
     except KeyboardInterrupt:
         pass                    # Ctrl+C es la forma normal de salir, no un error
     finally:
+        # `ros2 launch` reenvía Ctrl+C a cada nodo, así que puede llegar un
+        # segundo mientras este se cierra. Se ignora para terminar sin errores.
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
         nodo.destroy_node()     # 4. Lo destruye al salir
         rclpy.try_shutdown()    # 5. Apaga ROS2 (si Ctrl+C no lo apagó ya)
 

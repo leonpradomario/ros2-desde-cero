@@ -53,3 +53,11 @@ jobs:
       - name: Comprobar que el servicio devolvió la suma
         run: |
           grep -c 'Resultado: 2 + 3 = 5' salida.log
+
+      - name: Comprobar que Ctrl+C apaga los nodos sin errores
+        run: |
+          if grep -E 'Traceback|process has died' salida.log; then
+            echo "Los nodos no se cerraron limpio."
+            exit 1
+          fi
+          grep -c 'process has finished cleanly' salida.log
